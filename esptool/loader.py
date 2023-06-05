@@ -243,6 +243,13 @@ class ESPLoader(object):
     # Flash sector size, minimum unit of erase.
     FLASH_SECTOR_SIZE = 0x1000
 
+    # Firia Labs
+    # We are seeing esptool "hang" with certain "flash content" and "block size"
+    # scenarios. One work-around that seems to help is to force a really small block size.
+    # See read_flash()
+    READABLE_FLASH_SECTOR_SIZE = 0x0400
+
+
     UART_DATE_REG_ADDR = 0x60000078
 
     # This ROM address has a different value on each chip model
@@ -1119,14 +1126,18 @@ class ESPLoader(object):
         self.check_command(
             "read flash",
             self.ESP_READ_FLASH,
-            struct.pack("<IIII", offset, length, self.FLASH_SECTOR_SIZE, 64),
+            # We don't know yet why passing smaller data blocks helps...
+            #struct.pack("<IIII", offset, length, self.FLASH_SECTOR_SIZE, 64),
+            struct.pack("<IIII", offset, length, self.READABLE_FLASH_SECTOR_SIZE, 64),
         )
         # now we expect (length // block_size) SLIP frames with the data
         data = b""
         while len(data) < length:
             p = self.read()
             data += p
-            if len(data) < length and len(p) < self.FLASH_SECTOR_SIZE:
+            # This change is required to be compatible with the above change
+            #if len(data) < length and len(p) < self.FLASH_SECTOR_SIZE:
+            if len(data) < length and len(p) < self.READABLE_FLASH_SECTOR_SIZE:
                 raise FatalError(
                     "Corrupt data, expected 0x%x bytes but received 0x%x bytes"
                     % (self.FLASH_SECTOR_SIZE, len(p))
