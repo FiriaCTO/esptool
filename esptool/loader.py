@@ -247,7 +247,7 @@ class ESPLoader(object):
     # We are seeing esptool "hang" with certain "flash content" and "block size"
     # scenarios. One work-around that seems to help is to force a really small block size.
     # See read_flash()
-    READABLE_FLASH_SECTOR_SIZE = 0x0400
+    READABLE_FLASH_SECTOR_SIZE = 0x0200  # Firia: reduced from 0x0400 on 5/22/24
 
 
     UART_DATE_REG_ADDR = 0x60000078
